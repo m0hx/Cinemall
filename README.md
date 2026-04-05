@@ -6,3 +6,12 @@ A modern cinema tickets booking system with real-time seat reservations, notific
 
 # 🗓️ Trello
 https://trello.com/b/ZRSCRzBm/project-3-jdb-cinemall
+
+# Backend (Java)
+Start the app and run, api will be active on:
+http://localhost:8080
+
+# Frontend (React)
+npm run build
+npm run dev
+

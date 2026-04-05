@@ -12,6 +12,8 @@ Start the app and run, api will be active on:
 http://localhost:8080
 
 # Frontend (React)
-npm run build
-npm run dev
+npm run build  
+npm run dev  
+http://localhost:5173/  
+
 

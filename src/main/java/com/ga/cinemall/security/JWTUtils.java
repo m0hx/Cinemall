@@ -24,8 +24,10 @@ public class JWTUtils {
 	private final int jwtExpirationMs;
 
 	public JWTUtils(
-			@Value("${jwt-secret}") String rawSecret,
-			@Value("${jwt-expiration-ms:86400000}") int jwtExpirationMs) {
+			@Value("${jwt-secret}")
+			String rawSecret,
+			@Value("${jwt-expiration-ms:86400000}")
+			int jwtExpirationMs) {
 		String secret = rawSecret.replace("\"", "").trim();
 		this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
 		this.jwtExpirationMs = jwtExpirationMs;

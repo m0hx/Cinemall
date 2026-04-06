@@ -22,7 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-/** Registration and login live here (single service for user auth). */
+/** Registration and login **/
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -42,8 +42,8 @@ public class UserService {
 			throw new InformationExistException("User already exist");
 		}
 		Role userRole = roleRepository
-				.findByName("ROLE_USER")
-				.orElseThrow(() -> new IllegalStateException("ROLE_USER not seeded — restart the app"));
+				.findByName("USER")
+				.orElseThrow(() -> new IllegalStateException("USER role not seeded — restart the app"));
 		User user = new User();
 		user.setEmail(req.getEmail().trim().toLowerCase());
 		user.setPasswordHash(passwordEncoder.encode(req.getPassword()));

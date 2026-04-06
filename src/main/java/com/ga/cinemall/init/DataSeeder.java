@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * Demo users only if the {@code users} table is empty. Roles are created by {@link RoleInitializer}.
+ * Demo users only if the {users} table is empty. Roles are created by {@link RoleInitializer}.
  */
 @Configuration
 public class DataSeeder {
@@ -29,8 +29,8 @@ public class DataSeeder {
 
 			System.out.println("Starting database seeding (demo users)...");
 
-			Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElseThrow();
-			Role userRole = roleRepository.findByName("ROLE_USER").orElseThrow();
+			Role adminRole = roleRepository.findByName("ADMIN").orElseThrow();
+			Role userRole = roleRepository.findByName("USER").orElseThrow();
 
 			User admin = new User();
 			admin.setEmail("admin@cinemall.local");

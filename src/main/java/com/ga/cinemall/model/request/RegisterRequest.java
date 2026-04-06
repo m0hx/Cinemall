@@ -3,7 +3,7 @@ package com.ga.cinemall.model.request;
 import lombok.Getter;
 import lombok.Setter;
 
-/** Signup body — maps to {@link com.ga.cinemall.model.User} in {@code UserService}. */
+/** Signup body - maps to {@link com.ga.cinemall.model.User} in {UserService}. **/
 @Getter
 @Setter
 public class RegisterRequest {

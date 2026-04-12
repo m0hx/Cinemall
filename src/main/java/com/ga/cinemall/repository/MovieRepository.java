@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MovieRepository extends JpaRepository<Movie, Long> {
 
 	Optional<Movie> findByTitleIgnoreCase(String title);
+
+	long countByGenre_Id(Long genreId);
 }

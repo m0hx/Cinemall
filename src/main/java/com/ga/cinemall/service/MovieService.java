@@ -1,6 +1,8 @@
 package com.ga.cinemall.service;
 
+import com.ga.cinemall.model.Genre;
 import com.ga.cinemall.model.Movie;
+import com.ga.cinemall.repository.GenreRepository;
 import com.ga.cinemall.repository.MovieRepository;
 import java.io.IOException;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class MovieService {
 
 	private final MovieRepository movieRepository;
+	private final GenreRepository genreRepository;
 
 	public List<Movie> getAllMovies() {
 		return movieRepository.findAll();
@@ -28,6 +31,10 @@ public class MovieService {
 
 	public Movie createMovie(Movie movieObject) {
 		movieObject.setId(null);
+		if (movieObject.getGenre() == null || movieObject.getGenre().getId() == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Genre is required");
+		}
+		movieObject.setGenre(resolveGenreById(movieObject.getGenre().getId()));
 		return movieRepository.save(movieObject);
 	}
 
@@ -38,6 +45,9 @@ public class MovieService {
 		existing.setReleaseDate(movieObject.getReleaseDate());
 		existing.setDurationMins(movieObject.getDurationMins());
 		existing.setStatus(movieObject.getStatus());
+		if (movieObject.getGenre() != null && movieObject.getGenre().getId() != null) {
+			existing.setGenre(resolveGenreById(movieObject.getGenre().getId()));
+		}
 		movieRepository.save(existing);
 		return getMovieById(movieId);
 	}
@@ -61,5 +71,11 @@ public class MovieService {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Could not read poster file");
 		}
 		return movieRepository.save(movie);
+	}
+
+	private Genre resolveGenreById(Long genreId) {
+		return genreRepository
+				.findById(genreId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid genre id"));
 	}
 }

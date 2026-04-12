@@ -43,6 +43,8 @@ public class SecurityConfiguration {
 						.permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/movies", "/api/movies/**")
 						.permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/genres", "/api/genres/**")
+						.permitAll()
 						.anyRequest()
 						.authenticated());
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);

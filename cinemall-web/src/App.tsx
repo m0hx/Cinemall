@@ -3,7 +3,6 @@ import { Layout } from './components/Layout.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { SignInPage } from './pages/SignInPage.tsx'
 import { SignUpPage } from './pages/SignUpPage.tsx'
-import './App.css'
 
 export default function App() {
   return (

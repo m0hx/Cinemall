@@ -24,12 +24,17 @@ export function SignUpPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
     setLoading(true)
     try {
       await postJson<RegisterResponse>('/auth/users/register', {
@@ -89,6 +94,18 @@ export function SignUpPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
+              aria-invalid={error ? true : undefined}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="signup-confirm-password">Confirm password</Label>
+            <Input
+              id="signup-confirm-password"
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required
               aria-invalid={error ? true : undefined}
             />

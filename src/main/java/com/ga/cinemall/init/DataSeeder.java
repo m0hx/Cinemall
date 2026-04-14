@@ -1,11 +1,17 @@
 package com.ga.cinemall.init;
 
 import com.ga.cinemall.model.Genre;
+import com.ga.cinemall.model.Hall;
+import com.ga.cinemall.model.HallSeat;
+import com.ga.cinemall.model.HallStatus;
 import com.ga.cinemall.model.Movie;
 import com.ga.cinemall.model.MovieStatus;
 import com.ga.cinemall.model.Role;
+import com.ga.cinemall.model.SeatType;
 import com.ga.cinemall.model.User;
 import com.ga.cinemall.repository.GenreRepository;
+import com.ga.cinemall.repository.HallRepository;
+import com.ga.cinemall.repository.HallSeatRepository;
 import com.ga.cinemall.repository.MovieRepository;
 import com.ga.cinemall.repository.RoleRepository;
 import com.ga.cinemall.repository.UserRepository;
@@ -24,6 +30,8 @@ public class DataSeeder {
 	@Bean
 	CommandLineRunner seedDatabase(
 			GenreRepository genreRepository,
+			HallRepository hallRepository,
+			HallSeatRepository hallSeatRepository,
 			MovieRepository movieRepository,
 			RoleRepository roleRepository,
 			UserRepository userRepository,
@@ -64,6 +72,9 @@ public class DataSeeder {
 
 			// seed movies
 			seedMovies(genreRepository, movieRepository);
+
+			// seed halls + seats
+			seedHallsAndSeats(hallRepository, hallSeatRepository);
 		};
 	}
 
@@ -115,5 +126,52 @@ public class DataSeeder {
 			m.setGenre(genre);
 			movieRepository.save(m);
 		}
+	}
+
+	private static void seedHallsAndSeats(HallRepository hallRepository, HallSeatRepository hallSeatRepository) {
+		Hall hall1 = hallRepository
+				.findByNameIgnoreCase("Hall 1")
+				.orElseGet(
+						() -> {
+							Hall h = new Hall();
+							h.setName("Hall 1");
+							h.setStatus(HallStatus.ACTIVE);
+							return hallRepository.save(h);
+						});
+
+		if (hallSeatRepository.countByHall_Id(hall1.getId()) > 0) {
+			return;
+		}
+
+		seedHall1Seats(hall1, hallSeatRepository);
+	}
+
+	private static void seedHall1Seats(Hall hall, HallSeatRepository hallSeatRepository) {
+		final char firstRow = 'A';
+		final char lastRow = 'E';
+		final int seatsPerRow = 8;
+
+		for (char row = firstRow; row <= lastRow; row++) {
+			for (int seatNum = 1; seatNum <= seatsPerRow; seatNum++) {
+				HallSeat seat = new HallSeat();
+				seat.setHall(hall);
+				seat.setRowLabel(String.valueOf(row));
+				seat.setSeatNumber(seatNum);
+				seat.setSeatLabel(seat.getRowLabel() + seatNum);
+				seat.setAccessible(isHall1AccessibleSeat(row, seatNum, seatsPerRow));
+				seat.setType(hall1SeatType(row));
+				hallSeatRepository.save(seat);
+			}
+		}
+	}
+
+	private static boolean isHall1AccessibleSeat(char row, int seatNum, int seatsPerRow) {
+		return row == 'A' && (seatNum == 1 || seatNum == seatsPerRow);
+	}
+
+	private static SeatType hall1SeatType(char row) {
+		if (row == 'E') return SeatType.VIP;
+		if (row == 'D') return SeatType.PREMIUM;
+		return SeatType.STANDARD;
 	}
 }

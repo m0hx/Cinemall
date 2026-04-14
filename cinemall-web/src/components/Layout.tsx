@@ -9,12 +9,20 @@ export function Layout() {
     <div className="flex min-h-svh flex-col">
       <header className="sticky top-0 z-50 border-b border-border/80 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
-          <Link
-            to="/"
-            className="font-heading text-lg font-semibold tracking-tight text-foreground transition-colors hover:text-primary"
-          >
-            Cinemall
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="font-heading text-lg font-semibold tracking-tight text-foreground transition-colors hover:text-primary"
+            >
+              Cinemall
+            </Link>
+            <nav className="hidden items-center gap-1 sm:flex">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/movies">Movies</Link>
+              </Button>
+            </nav>
+          </div>
+
           <nav className="flex shrink-0 items-center gap-2">
             {token ? (
               <Button type="button" variant="outline" size="sm" onClick={logout}>

@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout.tsx'
 import { HomePage } from './pages/HomePage.tsx'
+import { MoviesPage } from './pages/MoviesPage.tsx'
 import { SignInPage } from './pages/SignInPage.tsx'
 import { SignUpPage } from './pages/SignUpPage.tsx'
 
@@ -9,6 +10,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/movies" element={<MoviesPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
       </Route>

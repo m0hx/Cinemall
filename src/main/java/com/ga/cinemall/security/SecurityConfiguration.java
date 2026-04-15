@@ -47,6 +47,8 @@ public class SecurityConfiguration {
 						.permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/halls", "/api/halls/**")
 						.permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/showtimes", "/api/showtimes/**")
+						.permitAll()
 						.anyRequest()
 						.authenticated());
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);

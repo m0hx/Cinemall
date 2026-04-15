@@ -1,7 +1,9 @@
 package com.ga.cinemall.controller;
 
 import com.ga.cinemall.model.Movie;
+import com.ga.cinemall.model.Showtime;
 import com.ga.cinemall.service.MovieService;
+import com.ga.cinemall.service.ShowtimeService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class MovieController {
 
 	private final MovieService movieService;
+	private final ShowtimeService showtimeService;
 
 	@PostMapping
 	@PreAuthorize("hasAuthority('ADMIN')")
@@ -40,6 +43,11 @@ public class MovieController {
 	@GetMapping("/{movieId}")
 	public Movie getMovieById(@PathVariable Long movieId) {
 		return movieService.getMovieById(movieId);
+	}
+
+	@GetMapping("/{movieId}/showtimes")
+	public List<Showtime> getShowtimesForMovie(@PathVariable Long movieId) {
+		return showtimeService.getShowtimesForMovie(movieId);
 	}
 
 	@GetMapping("/{movieId}/poster")

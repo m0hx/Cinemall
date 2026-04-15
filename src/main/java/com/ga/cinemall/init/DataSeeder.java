@@ -7,6 +7,8 @@ import com.ga.cinemall.model.HallStatus;
 import com.ga.cinemall.model.Movie;
 import com.ga.cinemall.model.MovieStatus;
 import com.ga.cinemall.model.Role;
+import com.ga.cinemall.model.Showtime;
+import com.ga.cinemall.model.ShowtimeStatus;
 import com.ga.cinemall.model.SeatType;
 import com.ga.cinemall.model.User;
 import com.ga.cinemall.repository.GenreRepository;
@@ -14,9 +16,11 @@ import com.ga.cinemall.repository.HallRepository;
 import com.ga.cinemall.repository.HallSeatRepository;
 import com.ga.cinemall.repository.MovieRepository;
 import com.ga.cinemall.repository.RoleRepository;
+import com.ga.cinemall.repository.ShowtimeRepository;
 import com.ga.cinemall.repository.UserRepository;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +37,7 @@ public class DataSeeder {
 			HallRepository hallRepository,
 			HallSeatRepository hallSeatRepository,
 			MovieRepository movieRepository,
+			ShowtimeRepository showtimeRepository,
 			RoleRepository roleRepository,
 			UserRepository userRepository,
 			PasswordEncoder passwordEncoder) {
@@ -75,6 +80,9 @@ public class DataSeeder {
 
 			// seed halls + seats
 			seedHallsAndSeats(hallRepository, hallSeatRepository);
+
+			// seed showtimes
+			seedShowtimes(movieRepository, hallRepository, showtimeRepository);
 		};
 	}
 
@@ -173,5 +181,35 @@ public class DataSeeder {
 		if (row == 'E') return SeatType.VIP;
 		if (row == 'D') return SeatType.PREMIUM;
 		return SeatType.STANDARD;
+	}
+
+	private static void seedShowtimes(
+			MovieRepository movieRepository,
+			HallRepository hallRepository,
+			ShowtimeRepository showtimeRepository) {
+				Hall hall1 = hallRepository.findByNameIgnoreCase("Hall 1")
+						.orElseThrow(() -> new IllegalStateException("Hall 1 not seeded"));
+
+		Movie scream = movieRepository.findByTitleIgnoreCase("Scream 7").orElse(null);
+
+		Movie dune = movieRepository.findByTitleIgnoreCase("Dune: Part Two").orElse(null);
+
+		if (scream == null || dune == null) return;
+
+		Instant base = Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS);
+		List<Showtime> seeds = List.of(
+				new Showtime(null, scream, hall1, base.plus(18, ChronoUnit.HOURS), base.plus(20, ChronoUnit.HOURS), ShowtimeStatus.SCHEDULED),
+				new Showtime(null, scream, hall1, base.plus(21, ChronoUnit.HOURS), base.plus(23, ChronoUnit.HOURS), ShowtimeStatus.SCHEDULED),
+				new Showtime(null, dune, hall1, base.plus(24, ChronoUnit.HOURS), base.plus(27, ChronoUnit.HOURS), ShowtimeStatus.SCHEDULED));
+
+		for (Showtime s : seeds) {
+			boolean overlaps = showtimeRepository.existsByHall_IdAndStartsAtLessThanAndEndsAtGreaterThan(
+					hall1.getId(),
+					s.getEndsAt(),
+					s.getStartsAt());
+			if (!overlaps) {
+				showtimeRepository.save(s);
+			}
+		}
 	}
 }

@@ -42,7 +42,7 @@ ___
 | POST         | /api/halls                       | ➕ Create hall             | Private |
 | PUT          | /api/halls/{id}                  | ✏️ Update hall             | Private |
 | DELETE       | /api/halls/{id}                  | ❌ Delete hall             | Private |
-| GET          | /api/halls/{id}/seats            | 💺 Get hall seats          | Public  |
+| GET          | /api/halls/{id}/seats            | 🪑 Get hall seats          | Public  |
 | POST         | /api/halls/{id}/seats            | ➕ Create seat             | Private |
 | PUT          | /api/halls/seats/{id}            | ✏️ Update seat             | Private |
 | DELETE       | /api/halls/seats/{id}            | ❌ Delete seat             | Private |

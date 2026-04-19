@@ -209,8 +209,8 @@ export function MoviesPage() {
                       {m.description}
                     </p>
                   ) : null}
-                  <Button className="w-full" disabled>
-                    View showtimes (next)
+                  <Button className="w-full" asChild>
+                    <Link to={`/movies/${m.id}`}>View details & showtimes</Link>
                   </Button>
                 </CardContent>
               </Card>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getBlobUrl, getJson } from '../api/client'
+import { formatInstantRange } from '@/lib/formatInstantRange'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -31,32 +32,6 @@ type Showtime = {
   startsAt: string
   endsAt: string
   status: string
-}
-
-function formatInstantRange(startIso: string, endIso: string): string {
-  const start = new Date(startIso)
-  const end = new Date(endIso)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return `${startIso} – ${endIso}`
-  }
-  const dateFmt = new Intl.DateTimeFormat(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-  const timeFmt = new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-  const sameDay =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth() &&
-    start.getDate() === end.getDate()
-  if (sameDay) {
-    return `${dateFmt.format(start)} · ${timeFmt.format(start)} – ${timeFmt.format(end)}`
-  }
-  return `${dateFmt.format(start)} ${timeFmt.format(start)} → ${dateFmt.format(end)} ${timeFmt.format(end)}`
 }
 
 export function MovieDetailPage() {
@@ -211,10 +186,33 @@ export function MovieDetailPage() {
               <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground">
                 {movie.title}
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {movie.genre?.name ? movie.genre.name : 'Uncategorized'}
-                {movie.durationMins != null ? ` · ${movie.durationMins} min` : ''}
-                {movie.releaseDate ? ` · ${movie.releaseDate}` : ''}
+              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                <span>
+                  <span className="font-medium text-foreground/85">Genre:</span>{' '}
+                  {movie.genre?.name ?? 'Uncategorized'}
+                </span>
+                {movie.durationMins != null ? (
+                  <>
+                    <span aria-hidden className="text-border/80">
+                      |
+                    </span>
+                    <span>
+                      <span className="font-medium text-foreground/85">Duration:</span>{' '}
+                      {movie.durationMins} min
+                    </span>
+                  </>
+                ) : null}
+                {movie.releaseDate ? (
+                  <>
+                    <span aria-hidden className="text-border/80">
+                      |
+                    </span>
+                    <span>
+                      <span className="font-medium text-foreground/85">Release date:</span>{' '}
+                      {movie.releaseDate}
+                    </span>
+                  </>
+                ) : null}
               </p>
             </div>
 

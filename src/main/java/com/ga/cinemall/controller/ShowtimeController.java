@@ -1,6 +1,7 @@
 package com.ga.cinemall.controller;
 
 import com.ga.cinemall.model.Showtime;
+import com.ga.cinemall.service.ShowSeatService;
 import com.ga.cinemall.service.ShowtimeService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShowtimeController {
 
 	private final ShowtimeService showtimeService;
+	private final ShowSeatService showSeatService;
 
 	@GetMapping
 	public List<Showtime> getAllShowtimes() {
@@ -29,6 +31,11 @@ public class ShowtimeController {
 	@GetMapping("/{showtimeId}")
 	public Showtime getShowtimeById(@PathVariable Long showtimeId) {
 		return showtimeService.getShowtimeById(showtimeId);
+	}
+
+	@GetMapping("/{showtimeId}/seats")
+	public List<ShowSeatService.ShowSeatDto> getSeatMap(@PathVariable Long showtimeId) {
+		return showSeatService.getSeatMapForShowtime(showtimeId);
 	}
 
 	@PostMapping

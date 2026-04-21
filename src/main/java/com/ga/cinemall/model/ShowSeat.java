@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,4 +44,11 @@ public class ShowSeat {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 16)
 	private ShowSeatStatus status;
+
+	@ManyToOne
+	@JoinColumn(name = "reserved_by_user_id")
+	private User reservedByUser;
+
+	@Column(name = "reserved_until")
+	private Instant reservedUntil;
 }

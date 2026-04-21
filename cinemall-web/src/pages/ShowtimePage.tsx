@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getJson } from '../api/client'
+import { getJson, postJson } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import { formatInstantRange } from '@/lib/formatInstantRange'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -32,6 +33,25 @@ type ShowSeat = {
   type: string | null
   accessible: boolean
   status: ShowSeatStatus
+}
+
+type ReserveResponse = {
+  reservedUntil: string
+  seats: ShowSeat[]
+}
+
+function formatReservedUntil(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+
+  const dateTimeFmt = new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+  return dateTimeFmt.format(d)
 }
 
 function groupSeatsByRow(seats: ShowSeat[]): { rowLabel: string; seats: ShowSeat[] }[] {
@@ -97,10 +117,14 @@ function seatStatusIdleClass(status: ShowSeatStatus): string {
 export function ShowtimePage() {
   const { showtimeId: showtimeIdParam } = useParams<{ showtimeId: string }>()
   const showtimeId = showtimeIdParam != null ? Number(showtimeIdParam) : NaN
+  const { token } = useAuth()
 
   const [showtime, setShowtime] = useState<ShowtimeDetail | null>(null)
   const [showSeats, setShowSeats] = useState<ShowSeat[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set())
+  const [reserving, setReserving] = useState(false)
+  const [reserveError, setReserveError] = useState<string | null>(null)
+  const [reservedUntil, setReservedUntil] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -117,6 +141,8 @@ export function ShowtimePage() {
     setShowtime(null)
     setShowSeats([])
     setSelectedIds(new Set())
+    setReserveError(null)
+    setReservedUntil(null)
 
     ;(async () => {
       try {
@@ -159,6 +185,35 @@ export function ShowtimePage() {
       else next.add(id)
       return next
     })
+  }
+
+  async function reserveSelected() {
+    setReserveError(null)
+    if (!token) {
+      setReserveError('Please sign in to reserve seats.')
+      return
+    }
+    if (Number.isNaN(showtimeId) || showtimeId < 1) return
+    const ids = Array.from(selectedIds.values())
+    if (ids.length === 0) {
+      setReserveError('Select at least 1 seat first.')
+      return
+    }
+    setReserving(true)
+    try {
+      const res = await postJson<ReserveResponse>(
+        '/api/bookings/reserve',
+        { showtimeId, showSeatIds: ids },
+        { token },
+      )
+      setShowSeats(Array.isArray(res.seats) ? res.seats : [])
+      setReservedUntil(res.reservedUntil ?? null)
+      setSelectedIds(new Set())
+    } catch (err) {
+      setReserveError(err instanceof Error ? err.message : 'Failed to reserve seats')
+    } finally {
+      setReserving(false)
+    }
   }
 
   if (error && !loading) {
@@ -251,6 +306,35 @@ export function ShowtimePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5 px-2 sm:px-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-xs text-muted-foreground">
+                  {reservedUntil ? (
+                    <span>
+                      Reserved until{' '}
+                      <span className="text-foreground/90">
+                        {formatReservedUntil(reservedUntil)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span>Reserved seats will be held for 5 minutes.</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={reserving || selectedIds.size === 0}
+                    onClick={() => void reserveSelected()}
+                  >
+                    {reserving ? 'Reserving…' : 'Reserve selected'}
+                  </Button>
+                </div>
+              </div>
+
+              {reserveError ? (
+                <p className="text-sm text-rose-200">{reserveError}</p>
+              ) : null}
+
               {/* Screen */}
               <div
                 className="mx-auto max-w-3xl rounded-lg border border-border/50 bg-gradient-to-b from-muted/50 to-muted/10 px-4 py-3 text-center shadow-inner"

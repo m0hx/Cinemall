@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getJson, postJson } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
@@ -95,20 +95,20 @@ function rowToAlignedSlots(
 function seatTypeIdleClass(type: string | null): string {
   switch (type) {
     case 'VIP':
-      return 'border-amber-500/55 bg-amber-950/25 text-amber-100'
+      return 'border-pink-500/60 bg-pink-950/35 text-pink-50'
     case 'PREMIUM':
-      return 'border-violet-500/45 bg-violet-950/30 text-violet-100'
+      return 'border-blue-500/55 bg-blue-950/35 text-blue-50'
     default:
-      return 'border-border/80 bg-muted/30 text-foreground'
+      return 'border-gray-400/55 bg-gray-500/18 text-gray-100'
   }
 }
 
 function seatStatusIdleClass(status: ShowSeatStatus): string {
   switch (status) {
     case 'BOOKED':
-      return 'opacity-80 border-rose-500/35 bg-rose-950/25 text-rose-100 cursor-not-allowed'
+      return 'cursor-not-allowed border-zinc-800/90 bg-zinc-950/95 text-zinc-500 opacity-75'
     case 'RESERVED':
-      return 'opacity-75 border-orange-500/40 bg-orange-950/20 text-orange-100 cursor-not-allowed'
+      return 'opacity-80 border-orange-500/55 bg-orange-950/30 text-orange-50 cursor-not-allowed'
     default:
       return ''
   }
@@ -164,6 +164,41 @@ export function ShowtimePage() {
       cancelled = true
     }
   }, [showtimeId])
+
+  const refetchSeats = useCallback(async () => {
+    if (Number.isNaN(showtimeId) || showtimeId < 1) return
+    try {
+      const seats = await getJson<ShowSeat[]>(`/api/showtimes/${showtimeId}/seats`)
+      const list = Array.isArray(seats) ? seats : []
+      setShowSeats(list)
+      setSelectedIds((prev) => {
+        const next = new Set<number>()
+        for (const id of prev) {
+          const seat = list.find((s) => s.id === id)
+          if (seat?.status === 'AVAILABLE') next.add(id)
+        }
+        return next
+      })
+    } catch {
+      /* ignore background poll errors */
+    }
+  }, [showtimeId])
+
+  useEffect(() => {
+    if (loading || !showtime) return
+    const t = window.setInterval(() => {
+      void refetchSeats()
+    }, 500)
+    return () => clearInterval(t)
+  }, [loading, showtime, refetchSeats])
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === 'visible') void refetchSeats()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [refetchSeats])
 
   const rows = useMemo(() => groupSeatsByRow(showSeats), [showSeats])
   const { min: seatColMin, max: seatColMax, colCount } = useMemo(
@@ -288,17 +323,13 @@ export function ShowtimePage() {
                 </p>
               </div>
             </CardHeader>
-            <CardContent className="text-xs text-muted-foreground">
-              Seat numbers share one column index across all rows. Empty cells are aisles / gaps. Booking
-              API comes later.
-            </CardContent>
           </Card>
 
           <Card className="ui-surface overflow-hidden">
             <CardHeader>
               <CardTitle className="text-lg">Select seats</CardTitle>
               <CardDescription>
-                Tap a seat to toggle. Selected seats show a checkmark.{' '}
+                Click or tap a seat to toggle. Selected seats show a checkmark.{' '}
                 <span className="text-foreground/90">
                   {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'None selected'}
                 </span>
@@ -432,28 +463,23 @@ export function ShowtimePage() {
                 </div>
               </div>
 
-              <p className="text-center text-[0.65rem] text-muted-foreground sm:text-xs">
-                Scroll sideways on small screens. Row letters are fixed on the left while you scroll.
-              </p>
-
-              {/* Legend */}
+              {/* Legend — Standard gray / Premium blue / VIP hot pink / Reserved orange / Booked greyed out / Selected violet */}
               <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border/50 pt-4 text-[0.7rem] text-muted-foreground sm:text-xs">
                 <span className="font-medium text-foreground/80">Key:</span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-4 w-4 rounded border-2 border-border/80 bg-muted/30" /> Standard
+                  <span className="h-4 w-4 rounded border-2 border-gray-400/55 bg-gray-500/18" /> Standard
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-4 w-4 rounded border-2 border-violet-500/50 bg-violet-950/30" />{' '}
-                  Premium
+                  <span className="h-4 w-4 rounded border-2 border-blue-500/55 bg-blue-950/35" /> Premium
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-4 w-4 rounded border-2 border-amber-500/55 bg-amber-950/25" /> VIP
+                  <span className="h-4 w-4 rounded border-2 border-pink-500/60 bg-pink-950/35" /> VIP
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-4 w-4 rounded border-2 border-orange-500/40 bg-orange-950/20" /> Reserved
+                  <span className="h-4 w-4 rounded border-2 border-orange-500/55 bg-orange-950/30" /> Reserved
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-4 w-4 rounded border-2 border-rose-500/35 bg-rose-950/25" /> Booked
+                  <span className="h-4 w-4 rounded border-2 border-zinc-800/90 bg-zinc-950/95 opacity-75" /> Booked
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="inline-flex h-4 w-4 items-center justify-center rounded border-2 border-violet-500/80 bg-violet-600 text-[0.55rem] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]">

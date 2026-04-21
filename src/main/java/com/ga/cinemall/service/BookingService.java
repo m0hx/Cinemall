@@ -26,6 +26,7 @@ public class BookingService {
 
 	private final ShowtimeRepository showtimeRepository;
 	private final ShowSeatRepository showSeatRepository;
+	private final ShowSeatService showSeatService;
 
 	public record ReserveRequest(Long showtimeId, List<Long> showSeatIds) {}
 
@@ -50,6 +51,8 @@ public class BookingService {
 		showtimeRepository
 				.findById(req.showtimeId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Showtime not found with id: " + req.showtimeId()));
+
+		showSeatService.expireStaleReservations(req.showtimeId());
 
 		User currentUser = requireCurrentUser();
 

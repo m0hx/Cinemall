@@ -7,6 +7,7 @@ import com.ga.cinemall.model.Showtime;
 import com.ga.cinemall.repository.HallSeatRepository;
 import com.ga.cinemall.repository.ShowSeatRepository;
 import com.ga.cinemall.repository.ShowtimeRepository;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ShowSeatService {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Showtime not found with id: " + showtimeId));
 
 		ensureInitialized(showtime);
+		expireStaleReservations(showtimeId);
 
 		List<ShowSeat> seats = showSeatRepository.findByShowtime_IdOrderByHallSeat_RowLabelAscHallSeat_SeatNumberAsc(showtimeId);
 		List<ShowSeatDto> result = new ArrayList<>(seats.size());
@@ -56,6 +58,29 @@ public class ShowSeatService {
 					s.getStatus()));
 		}
 		return result;
+	}
+
+	/**
+	 * Clears expired holds so the public seat map matches the 5-minute window after refresh.
+	 */
+	@Transactional
+	public void expireStaleReservations(Long showtimeId) {
+		Instant now = Instant.now();
+		List<ShowSeat> seats =
+				showSeatRepository.findByShowtime_IdOrderByHallSeat_RowLabelAscHallSeat_SeatNumberAsc(showtimeId);
+		for (ShowSeat s : seats) {
+			if (s.getStatus() != ShowSeatStatus.RESERVED) {
+				continue;
+			}
+			Instant until = s.getReservedUntil();
+			if (until != null && until.isAfter(now)) {
+				continue;
+			}
+			s.setStatus(ShowSeatStatus.AVAILABLE);
+			s.setReservedByUser(null);
+			s.setReservedUntil(null);
+			showSeatRepository.save(s);
+		}
 	}
 
 	private void ensureInitialized(Showtime showtime) {

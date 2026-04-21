@@ -21,17 +21,21 @@ type ShowtimeDetail = {
   status: string
 }
 
-type HallSeat = {
+type ShowSeatStatus = 'AVAILABLE' | 'RESERVED' | 'BOOKED'
+
+type ShowSeat = {
   id: number
+  hallSeatId: number
   rowLabel: string
   seatNumber: number
   seatLabel: string
-  type: string
-  accessible?: boolean
+  type: string | null
+  accessible: boolean
+  status: ShowSeatStatus
 }
 
-function groupSeatsByRow(seats: HallSeat[]): { rowLabel: string; seats: HallSeat[] }[] {
-  const byRow = new Map<string, HallSeat[]>()
+function groupSeatsByRow(seats: ShowSeat[]): { rowLabel: string; seats: ShowSeat[] }[] {
+  const byRow = new Map<string, ShowSeat[]>()
   for (const s of seats) {
     const list = byRow.get(s.rowLabel) ?? []
     list.push(s)
@@ -46,7 +50,7 @@ function groupSeatsByRow(seats: HallSeat[]): { rowLabel: string; seats: HallSeat
 }
 
 /** Align every row to the same seat-number columns so labels line up with the grid. */
-function globalSeatRange(seats: HallSeat[]): { min: number; max: number; colCount: number } {
+function globalSeatRange(seats: ShowSeat[]): { min: number; max: number; colCount: number } {
   if (seats.length === 0) return { min: 1, max: 1, colCount: 1 }
   const nums = seats.map((s) => s.seatNumber)
   const min = Math.min(...nums)
@@ -55,12 +59,12 @@ function globalSeatRange(seats: HallSeat[]): { min: number; max: number; colCoun
 }
 
 function rowToAlignedSlots(
-  rowSeats: HallSeat[],
+  rowSeats: ShowSeat[],
   globalMin: number,
   globalMax: number,
-): (HallSeat | null)[] {
+): (ShowSeat | null)[] {
   const len = globalMax - globalMin + 1
-  const slots: (HallSeat | null)[] = Array(len).fill(null)
+  const slots: (ShowSeat | null)[] = Array(len).fill(null)
   for (const s of rowSeats) {
     const idx = s.seatNumber - globalMin
     if (idx >= 0 && idx < len) slots[idx] = s
@@ -68,7 +72,7 @@ function rowToAlignedSlots(
   return slots
 }
 
-function seatTypeIdleClass(type: string): string {
+function seatTypeIdleClass(type: string | null): string {
   switch (type) {
     case 'VIP':
       return 'border-amber-500/55 bg-amber-950/25 text-amber-100'
@@ -79,12 +83,23 @@ function seatTypeIdleClass(type: string): string {
   }
 }
 
+function seatStatusIdleClass(status: ShowSeatStatus): string {
+  switch (status) {
+    case 'BOOKED':
+      return 'opacity-80 border-rose-500/35 bg-rose-950/25 text-rose-100 cursor-not-allowed'
+    case 'RESERVED':
+      return 'opacity-75 border-orange-500/40 bg-orange-950/20 text-orange-100 cursor-not-allowed'
+    default:
+      return ''
+  }
+}
+
 export function ShowtimePage() {
   const { showtimeId: showtimeIdParam } = useParams<{ showtimeId: string }>()
   const showtimeId = showtimeIdParam != null ? Number(showtimeIdParam) : NaN
 
   const [showtime, setShowtime] = useState<ShowtimeDetail | null>(null)
-  const [hallSeats, setHallSeats] = useState<HallSeat[]>([])
+  const [showSeats, setShowSeats] = useState<ShowSeat[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -100,7 +115,7 @@ export function ShowtimePage() {
     setLoading(true)
     setError(null)
     setShowtime(null)
-    setHallSeats([])
+    setShowSeats([])
     setSelectedIds(new Set())
 
     ;(async () => {
@@ -108,15 +123,9 @@ export function ShowtimePage() {
         const st = await getJson<ShowtimeDetail>(`/api/showtimes/${showtimeId}`)
         if (cancelled) return
         setShowtime(st)
-        const hallId = st.hall?.id
-        if (hallId == null) {
-          setError('This showtime has no hall assigned.')
-          setLoading(false)
-          return
-        }
-        const seats = await getJson<HallSeat[]>(`/api/halls/${hallId}/seats`)
+        const seats = await getJson<ShowSeat[]>(`/api/showtimes/${showtimeId}/seats`)
         if (cancelled) return
-        setHallSeats(Array.isArray(seats) ? seats : [])
+        setShowSeats(Array.isArray(seats) ? seats : [])
       } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Failed to load showtime')
@@ -130,10 +139,10 @@ export function ShowtimePage() {
     }
   }, [showtimeId])
 
-  const rows = useMemo(() => groupSeatsByRow(hallSeats), [hallSeats])
+  const rows = useMemo(() => groupSeatsByRow(showSeats), [showSeats])
   const { min: seatColMin, max: seatColMax, colCount } = useMemo(
-    () => globalSeatRange(hallSeats),
-    [hallSeats],
+    () => globalSeatRange(showSeats),
+    [showSeats],
   )
 
   const alignedRows = useMemo(() => {
@@ -299,6 +308,7 @@ export function ShowtimePage() {
                             )
                           }
                           const s = slot
+                          const disabled = s.status !== 'AVAILABLE'
                           const selected = selectedIds.has(s.id)
                           const idle = seatTypeIdleClass(s.type)
                           return (
@@ -306,15 +316,18 @@ export function ShowtimePage() {
                               key={s.id}
                               type="button"
                               aria-pressed={selected}
-                              aria-label={`Seat ${s.seatLabel}, ${s.type}${s.accessible ? ', accessible' : ''}${selected ? ', selected' : ', available'}`}
-                              title={`${s.seatLabel} · ${s.type}`}
-                              onClick={() => toggleSeat(s.id)}
+                              aria-disabled={disabled}
+                              aria-label={`Seat ${s.seatLabel}${s.type ? `, ${s.type}` : ''}${s.accessible ? ', accessible' : ''}${disabled ? `, ${s.status.toLowerCase()}` : ''}${selected ? ', selected' : ''}`}
+                              title={`${s.seatLabel}${s.type ? ` · ${s.type}` : ''} · ${s.status}`}
+                              onClick={() => {
+                                if (!disabled) toggleSeat(s.id)
+                              }}
                               className={cn(
                                 'relative flex h-11 min-h-[44px] min-w-[44px] flex-col items-center justify-center rounded-lg border-2 text-[0.7rem] font-semibold leading-none transition-colors sm:h-11 sm:min-w-[2.75rem]',
                                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400/60',
                                 selected
                                   ? 'border-violet-500/80 bg-violet-600 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]'
-                                  : cn('active:brightness-95', idle, 'hover:brightness-110'),
+                                  : cn('active:brightness-95', idle, seatStatusIdleClass(s.status), !disabled && 'hover:brightness-110'),
                               )}
                             >
                               <span className="tabular-nums">{s.seatNumber}</span>
@@ -351,6 +364,12 @@ export function ShowtimePage() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-4 w-4 rounded border-2 border-amber-500/55 bg-amber-950/25" /> VIP
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-4 w-4 rounded border-2 border-orange-500/40 bg-orange-950/20" /> Reserved
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-4 w-4 rounded border-2 border-rose-500/35 bg-rose-950/25" /> Booked
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="inline-flex h-4 w-4 items-center justify-center rounded border-2 border-violet-500/80 bg-violet-600 text-[0.55rem] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]">

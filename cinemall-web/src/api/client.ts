@@ -31,11 +31,15 @@ function asErrorMessage(parsed: unknown, status: number): string {
       : `Request failed (${status})`
 }
 
-export async function postJson<T>(path: string, body: unknown): Promise<T> {
+export async function postJson<T>(
+  path: string,
+  body: unknown,
+  opts?: { token?: string | null },
+): Promise<T> {
   const p = path.startsWith('/') ? path : `/${path}`
   const res = await fetch(`${apiBase()}${p}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(opts?.token) },
     body: JSON.stringify(body),
   })
   const parsed = await parseResponse(res)

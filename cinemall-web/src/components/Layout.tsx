@@ -18,9 +18,9 @@ export function Layout() {
 
   useEffect(() => {
     let cancelled = false
-    setIsAdmin(false)
-    if (!token) return
     ;(async () => {
+      setIsAdmin(false)
+      if (!token) return
       try {
         const me = await getJson<Me>('/api/users/me', { token })
         if (!cancelled) setIsAdmin(me.role === 'ADMIN')

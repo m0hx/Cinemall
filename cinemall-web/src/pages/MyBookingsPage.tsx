@@ -37,10 +37,10 @@ export function MyBookingsPage() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
     ;(async () => {
       try {
+        setLoading(true)
+        setError(null)
         if (!token) {
           setBookings([])
           return

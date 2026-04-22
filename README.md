@@ -2,6 +2,8 @@
 
 A modern cinema tickets booking system with real-time seat reservations, notifications, and secure payments.
 
+![Cinemall logo](https://i.imgur.com/6Nfx31C.png)
+
 ## Quick start
 
 | Type       | URL |

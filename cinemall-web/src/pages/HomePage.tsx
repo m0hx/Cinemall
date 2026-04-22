@@ -8,13 +8,23 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useAuth } from '../auth/AuthContext.tsx'
+import cinemallLogo from '@/assets/cinemall-logo.png'
 
 export function HomePage() {
   const { token } = useAuth()
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <div className="space-y-3">
+        <div className="flex justify-center">
+          <img
+            src={cinemallLogo}
+            alt="Cinemall logo"
+            className="h-auto w-full max-w-sm select-none"
+            loading="lazy"
+            draggable={false}
+          />
+        </div>
         <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
           Cinemall (Seen 'Em All)
         </p>
@@ -79,34 +89,6 @@ export function HomePage() {
         </Card>
       </div>
 
-      <Card className="ui-surface">
-        <CardHeader>
-          <CardTitle className="text-xl">
-            {token ? "You're signed in" : 'Get started'}
-          </CardTitle>
-          <CardDescription>
-            {token
-              ? 'Movies are ready. Showtimes + seats are next.'
-              : 'Sign in or create an account to continue.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {token ? (
-            <p className="text-sm text-muted-foreground">
-              Thanks for testing Cinemall.
-            </p>
-          ) : (
-            <>
-              <Button asChild>
-                <Link to="/signin">Sign in</Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link to="/about">What is Cinemall?</Link>
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

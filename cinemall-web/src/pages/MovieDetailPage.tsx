@@ -47,35 +47,34 @@ export function MovieDetailPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (Number.isNaN(movieId) || movieId < 1) {
-      setError('Invalid movie link.')
-      setLoading(false)
-      return
-    }
-
     let cancelled = false
-    setLoading(true)
-    setError(null)
-    setMovie(null)
-    setShowtimes([])
+    ;(async () => {
+      if (Number.isNaN(movieId) || movieId < 1) {
+        setLoading(false)
+        setError('Invalid movie link.')
+        return
+      }
 
-    Promise.all([
-      getJson<Movie>(`/api/movies/${movieId}`),
-      getJson<Showtime[]>(`/api/movies/${movieId}/showtimes`),
-    ])
-      .then(([movieData, showtimesData]) => {
+      setLoading(true)
+      setError(null)
+      setMovie(null)
+      setShowtimes([])
+
+      try {
+        const [movieData, showtimesData] = await Promise.all([
+          getJson<Movie>(`/api/movies/${movieId}`),
+          getJson<Showtime[]>(`/api/movies/${movieId}/showtimes`),
+        ])
         if (cancelled) return
         setMovie(movieData)
         setShowtimes(Array.isArray(showtimesData) ? showtimesData : [])
-      })
-      .catch((err) => {
+      } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Failed to load movie')
-      })
-      .finally(() => {
-        if (cancelled) return
-        setLoading(false)
-      })
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
 
     return () => {
       cancelled = true

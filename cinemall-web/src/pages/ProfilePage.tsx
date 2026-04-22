@@ -27,17 +27,16 @@ export function ProfilePage() {
 
   useEffect(() => {
     let cancelled = false
-    setError(null)
-    setSavedMsg(null)
-    setMe(null)
-    setDisplayName('')
-    setCurrentPassword('')
-    setNewPassword('')
-
-    if (!token) return
-
     ;(async () => {
       try {
+        setError(null)
+        setSavedMsg(null)
+        setMe(null)
+        setDisplayName('')
+        setCurrentPassword('')
+        setNewPassword('')
+
+        if (!token) return
         const res = await getJson<Me>('/api/users/me', { token })
         if (cancelled) return
         setMe(res)

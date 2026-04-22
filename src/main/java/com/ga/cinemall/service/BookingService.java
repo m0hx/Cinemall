@@ -45,6 +45,28 @@ public class BookingService {
 
 	public record CancelResponse(Long bookingId, BookingStatus status, List<ShowSeatService.ShowSeatDto> seats) {}
 
+	public record BookingSummaryResponse(
+			Long id,
+			BookingStatus status,
+			java.time.Instant createdAt,
+			java.time.Instant confirmedAt,
+			Long showtimeId,
+			java.time.Instant startsAt,
+			java.time.Instant endsAt,
+			String movieTitle,
+			List<String> seatLabels) {}
+
+	public record BookingDetailResponse(
+			Long id,
+			BookingStatus status,
+			java.time.Instant createdAt,
+			java.time.Instant confirmedAt,
+			Long showtimeId,
+			java.time.Instant startsAt,
+			java.time.Instant endsAt,
+			String movieTitle,
+			List<String> seatLabels) {}
+
 	public ReserveResponse reserveSeats(ReserveRequest req) {
 		if (req == null) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Body is required");
@@ -68,6 +90,56 @@ public class BookingService {
 		} finally {
 			reserveLock.unlock();
 		}
+	}
+
+	public List<BookingSummaryResponse> listMyBookings() {
+		User currentUser = requireCurrentUser();
+		List<Booking> bookings = bookingRepository.findByUser_IdOrderByCreatedAtDesc(currentUser.getId());
+
+		return bookings.stream().map((b) -> {
+			List<String> seatLabels = bookingSeatRepository.findByBooking_IdOrderByIdAsc(b.getId())
+					.stream()
+					.map((bs) -> bs.getShowSeat().getHallSeat().getSeatLabel())
+					.toList();
+
+			return new BookingSummaryResponse(
+					b.getId(),
+					b.getStatus(),
+					b.getCreatedAt(),
+					b.getConfirmedAt(),
+					b.getShowtime().getId(),
+					b.getShowtime().getStartsAt(),
+					b.getShowtime().getEndsAt(),
+					b.getShowtime().getMovie() != null ? b.getShowtime().getMovie().getTitle() : null,
+					seatLabels);
+		}).toList();
+	}
+
+	public BookingDetailResponse getMyBooking(Long bookingId) {
+		if (bookingId == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "bookingId is required");
+		}
+		User currentUser = requireCurrentUser();
+
+		Booking b = bookingRepository
+				.findByIdAndUser_Id(bookingId, currentUser.getId())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+
+		List<String> seatLabels = bookingSeatRepository.findByBooking_IdOrderByIdAsc(b.getId())
+				.stream()
+				.map((bs) -> bs.getShowSeat().getHallSeat().getSeatLabel())
+				.toList();
+
+		return new BookingDetailResponse(
+				b.getId(),
+				b.getStatus(),
+				b.getCreatedAt(),
+				b.getConfirmedAt(),
+				b.getShowtime().getId(),
+				b.getShowtime().getStartsAt(),
+				b.getShowtime().getEndsAt(),
+				b.getShowtime().getMovie() != null ? b.getShowtime().getMovie().getTitle() : null,
+				seatLabels);
 	}
 
 	public PendingResponse getPendingForShowtime(Long showtimeId) {

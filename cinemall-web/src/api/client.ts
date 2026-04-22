@@ -65,6 +65,24 @@ export async function getJson<T>(
   return parsed as T
 }
 
+export async function patchJson<T>(
+  path: string,
+  body: unknown,
+  opts?: { token?: string | null },
+): Promise<T> {
+  const p = path.startsWith('/') ? path : `/${path}`
+  const res = await fetch(`${apiBase()}${p}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(opts?.token) },
+    body: JSON.stringify(body),
+  })
+  const parsed = await parseResponse(res)
+  if (!res.ok) {
+    throw new Error(asErrorMessage(parsed, res.status))
+  }
+  return parsed as T
+}
+
 export async function getBlobUrl(
   path: string,
   opts?: { token?: string | null },

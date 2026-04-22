@@ -24,12 +24,12 @@ export function AdminUsersPage() {
 
   useEffect(() => {
     let cancelled = false
-    setError(null)
-    setUsers([])
-    setMeRole(null)
-    if (!token) return
     ;(async () => {
       try {
+        setError(null)
+        setUsers([])
+        setMeRole(null)
+        if (!token) return
         const me = await getJson<{ role: 'USER' | 'ADMIN' }>('/api/users/me', { token })
         if (cancelled) return
         setMeRole(me.role)

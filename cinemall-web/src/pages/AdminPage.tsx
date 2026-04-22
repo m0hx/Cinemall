@@ -12,9 +12,9 @@ export function AdminPage() {
 
   useEffect(() => {
     let cancelled = false
-    setRole(null)
-    if (!token) return
     ;(async () => {
+      setRole(null)
+      if (!token) return
       try {
         const me = await getJson<Me>('/api/users/me', { token })
         if (!cancelled) setRole(me.role)

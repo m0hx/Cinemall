@@ -36,26 +36,24 @@ export function MoviesPage() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
-
-    Promise.all([
-      getJson<Movie[]>('/api/movies'),
-      getJson<Genre[]>('/api/genres'),
-    ])
-      .then(([moviesData, genresData]) => {
+    ;(async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const [moviesData, genresData] = await Promise.all([
+          getJson<Movie[]>('/api/movies'),
+          getJson<Genre[]>('/api/genres'),
+        ])
         if (cancelled) return
         setMovies(Array.isArray(moviesData) ? moviesData : [])
         setGenres(Array.isArray(genresData) ? genresData : [])
-      })
-      .catch((err) => {
+      } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Failed to load movies')
-      })
-      .finally(() => {
-        if (cancelled) return
-        setLoading(false)
-      })
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
 
     return () => {
       cancelled = true
@@ -121,7 +119,7 @@ export function MoviesPage() {
             Movies
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-            Pick a movie to see available showtimes. (Halls + seats are next.)
+            Pick a movie to see available showtimes.
           </p>
         </div>
 

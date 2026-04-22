@@ -151,25 +151,45 @@ export function ShowtimePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (Number.isNaN(showtimeId) || showtimeId < 1) {
-      setError('Invalid showtime link.')
-      setLoading(false)
-      return
-    }
+  const rows = useMemo(() => groupSeatsByRow(showSeats), [showSeats])
+  const { min: seatColMin, max: seatColMax, colCount } = useMemo(
+    () => globalSeatRange(showSeats),
+    [showSeats],
+  )
 
+  const alignedRows = useMemo(() => {
+    return rows.map((r) => ({
+      rowLabel: r.rowLabel,
+      slots: rowToAlignedSlots(r.seats, seatColMin, seatColMax),
+    }))
+  }, [rows, seatColMin, seatColMax])
+
+  const seatNumberHeaders = useMemo(() => {
+    const list: number[] = []
+    for (let n = seatColMin; n <= seatColMax; n++) list.push(n)
+    return list
+  }, [seatColMin, seatColMax])
+
+  useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
-    setShowtime(null)
-    setShowSeats([])
-    setSelectedIds(new Set())
-    setReserveError(null)
-    setReservedUntil(null)
-    setBookingId(null)
 
     ;(async () => {
       try {
+        if (Number.isNaN(showtimeId) || showtimeId < 1) {
+          setLoading(false)
+          setError('Invalid showtime link.')
+          return
+        }
+
+        setLoading(true)
+        setError(null)
+        setShowtime(null)
+        setShowSeats([])
+        setSelectedIds(new Set())
+        setReserveError(null)
+        setReservedUntil(null)
+        setBookingId(null)
+
         const st = await getJson<ShowtimeDetail>(`/api/showtimes/${showtimeId}`)
         if (cancelled) return
         setShowtime(st)
@@ -196,7 +216,7 @@ export function ShowtimePage() {
     return () => {
       cancelled = true
     }
-  }, [showtimeId])
+  }, [showtimeId, token])
 
   const refetchSeats = useCallback(async () => {
     if (Number.isNaN(showtimeId) || showtimeId < 1) return
@@ -232,19 +252,6 @@ export function ShowtimePage() {
     document.addEventListener('visibilitychange', onVis)
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [refetchSeats])
-
-  const rows = useMemo(() => groupSeatsByRow(showSeats), [showSeats])
-  const { min: seatColMin, max: seatColMax, colCount } = useMemo(
-    () => globalSeatRange(showSeats),
-    [showSeats],
-  )
-
-  const alignedRows = useMemo(() => {
-    return rows.map((r) => ({
-      rowLabel: r.rowLabel,
-      slots: rowToAlignedSlots(r.seats, seatColMin, seatColMax),
-    }))
-  }, [rows, seatColMin, seatColMax])
 
   function toggleSeat(id: number) {
     setSelectedIds((prev) => {
@@ -353,12 +360,6 @@ export function ShowtimePage() {
 
   const movieId = showtime?.movie?.id
   const movieTitle = showtime?.movie?.title ?? 'Movie'
-
-  const seatNumberHeaders = useMemo(() => {
-    const list: number[] = []
-    for (let n = seatColMin; n <= seatColMax; n++) list.push(n)
-    return list
-  }, [seatColMin, seatColMax])
 
   return (
     <div className="space-y-6">

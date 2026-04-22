@@ -40,12 +40,12 @@ export function AdminBookingsPage() {
 
   useEffect(() => {
     let cancelled = false
-    setError(null)
-    setBookings([])
-    setMeRole(null)
-    if (!token) return
     ;(async () => {
       try {
+        setError(null)
+        setBookings([])
+        setMeRole(null)
+        if (!token) return
         const me = await getJson<{ role: 'USER' | 'ADMIN' }>('/api/users/me', { token })
         if (cancelled) return
         setMeRole(me.role)

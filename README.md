@@ -86,9 +86,9 @@ ___
 | GET          | /api/admin/bookings/{id} | 🔍 Get booking    | Private |
 
  
-# 💠 ERD (temp)
+# 💠 Entity-Relationship Diagram (ERD)
 ___
-![https://i.imgur.com/NgEwNxW.png](https://i.imgur.com/NgEwNxW.png)
+![https://i.imgur.com/mLZSING.png](https://i.imgur.com/mLZSING.png)
 
 # 🗓️ Trello
 ___

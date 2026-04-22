@@ -8,6 +8,9 @@ import { MovieDetailPage } from './pages/MovieDetailPage.tsx'
 import { ShowtimePage } from './pages/ShowtimePage.tsx'
 import { MyBookingsPage } from './pages/MyBookingsPage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
+import { AdminPage } from './pages/AdminPage.tsx'
+import { AdminUsersPage } from './pages/AdminUsersPage.tsx'
+import { AdminBookingsPage } from './pages/AdminBookingsPage.tsx'
 import { SignInPage } from './pages/SignInPage.tsx'
 import { SignUpPage } from './pages/SignUpPage.tsx'
 
@@ -23,6 +26,9 @@ export default function App() {
         <Route path="/showtimes/:showtimeId" element={<ShowtimePage />} />
         <Route path="/bookings" element={<MyBookingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/bookings" element={<AdminBookingsPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
       </Route>

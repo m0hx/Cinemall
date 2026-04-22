@@ -87,7 +87,16 @@ public class DataSeeder {
 	}
 
 	private static void seedGenres(GenreRepository genreRepository) {
-		List<String> names = List.of("Horror", "Comedy", "Drama", "Sci-Fi", "Action");
+		// Keep this list aligned with the movies we seed below.
+		List<String> names = List.of(
+				"Horror",
+				"Mystery",
+				"Romance",
+				"Adventure",
+				"Family",
+				"Fantasy",
+				"Comedy",
+				"Drama");
 		for (String name : names) {
 			if (genreRepository.findByNameIgnoreCase(name).isEmpty()) {
 				genreRepository.save(new Genre(null, name));
@@ -101,22 +110,34 @@ public class DataSeeder {
 		List<SeedMovie> seeds = List.of(
 				new SeedMovie(
 						"Scream 7",
-						"Ghostface returns to Woodsboro. Meta slasher sequel.",
-						LocalDate.of(2026, 3, 13),
-						122,
+						"Sidney Prescott is forced out of hiding when a new Ghostface targets her family.",
+						LocalDate.of(2026, 2, 27),
+						114,
 						"Horror"),
 				new SeedMovie(
-						"The Nice Guys",
-						"1970s LA private eyes stumble through a conspiracy.",
-						LocalDate.of(2016, 5, 20),
-						116,
+						"Titanic",
+						"A young aristocrat falls in love with a poor artist aboard the ill-fated RMS Titanic.",
+						LocalDate.of(1997, 12, 19),
+						195,
+						"Romance"),
+				new SeedMovie(
+						"Harry Potter and the Chamber of Secrets",
+						"Harry returns to Hogwarts for his second year as a mysterious force petrifies students.",
+						LocalDate.of(2002, 11, 15),
+						161,
+						"Fantasy"),
+				new SeedMovie(
+						"Zombieland",
+						"Survivors team up across a zombie-filled America with rules, laughs, and chaos.",
+						LocalDate.of(2009, 10, 2),
+						88,
 						"Comedy"),
 				new SeedMovie(
-						"Dune: Part Two",
-						"Paul Atreides unites with Chani and the Fremen.",
-						LocalDate.of(2024, 3, 1),
-						166,
-						"Sci-Fi"));
+						"Gilmore Girls",
+						"Small-town mother and daughter navigate school, family, and life in Stars Hollow.",
+						LocalDate.of(2000, 10, 5),
+						45,
+						"Drama"));
 
 		for (SeedMovie s : seeds) {
 			if (movieRepository.findByTitleIgnoreCase(s.title).isPresent()) {
@@ -166,15 +187,16 @@ public class DataSeeder {
 				seat.setRowLabel(String.valueOf(row));
 				seat.setSeatNumber(seatNum);
 				seat.setSeatLabel(seat.getRowLabel() + seatNum);
-				seat.setAccessible(isHall1AccessibleSeat(row, seatNum, seatsPerRow));
+				seat.setAccessible(isHall1AccessibleSeat(row, seatNum));
 				seat.setType(hall1SeatType(row));
 				hallSeatRepository.save(seat);
 			}
 		}
 	}
 
-	private static boolean isHall1AccessibleSeat(char row, int seatNum, int seatsPerRow) {
-		return row == 'A' && (seatNum == 1 || seatNum == seatsPerRow);
+	private static boolean isHall1AccessibleSeat(char row, int seatNum) {
+		// Hall 1 accessibility: first/last seats in row A.
+		return row == 'A' && (seatNum == 1 || seatNum == 8);
 	}
 
 	private static SeatType hall1SeatType(char row) {
@@ -191,18 +213,44 @@ public class DataSeeder {
 						.orElseThrow(() -> new IllegalStateException("Hall 1 not seeded"));
 
 		Movie scream = movieRepository.findByTitleIgnoreCase("Scream 7").orElse(null);
+		Movie titanic = movieRepository.findByTitleIgnoreCase("Titanic").orElse(null);
+		Movie hp2 = movieRepository.findByTitleIgnoreCase("Harry Potter and the Chamber of Secrets").orElse(null);
+		Movie zombieland = movieRepository.findByTitleIgnoreCase("Zombieland").orElse(null);
+		Movie gilmoreGirls = movieRepository.findByTitleIgnoreCase("Gilmore Girls").orElse(null);
 
-		Movie dune = movieRepository.findByTitleIgnoreCase("Dune: Part Two").orElse(null);
+		if (scream == null || titanic == null || hp2 == null || zombieland == null || gilmoreGirls == null) return;
 
-		if (scream == null || dune == null) return;
+		// seed showtimes
+		// - start tomorrow around 10:00
+		// - different number per movie
+		// - 30-min gap between showtimes
+		// - overlap check remains as a safety net
+		Instant cursor = Instant.now()
+				.plus(1, ChronoUnit.DAYS)
+				.truncatedTo(ChronoUnit.HOURS)
+				.plus(10, ChronoUnit.HOURS);
 
-		Instant base = Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS);
-		List<Showtime> seeds = List.of(
-				new Showtime(null, scream, hall1, base.plus(18, ChronoUnit.HOURS), base.plus(20, ChronoUnit.HOURS), ShowtimeStatus.SCHEDULED),
-				new Showtime(null, scream, hall1, base.plus(21, ChronoUnit.HOURS), base.plus(23, ChronoUnit.HOURS), ShowtimeStatus.SCHEDULED),
-				new Showtime(null, dune, hall1, base.plus(24, ChronoUnit.HOURS), base.plus(27, ChronoUnit.HOURS), ShowtimeStatus.SCHEDULED));
+		List<Movie> order = List.of(
+				zombieland,
+				scream,
+				hp2,
+				titanic,
+				zombieland,
+				scream,
+				gilmoreGirls,
+				hp2,
+				zombieland,
+				hp2,
+				scream,
+				titanic,
+				zombieland);
 
-		for (Showtime s : seeds) {
+		for (Movie m : order) {
+			int dur = m.getDurationMins() != null ? m.getDurationMins() : 120;
+			Instant startsAt = cursor;
+			Instant endsAt = cursor.plus(dur, ChronoUnit.MINUTES);
+			Showtime s = new Showtime(null, m, hall1, startsAt, endsAt, ShowtimeStatus.SCHEDULED);
+
 			boolean overlaps = showtimeRepository.existsByHall_IdAndStartsAtLessThanAndEndsAtGreaterThan(
 					hall1.getId(),
 					s.getEndsAt(),
@@ -210,6 +258,8 @@ public class DataSeeder {
 			if (!overlaps) {
 				showtimeRepository.save(s);
 			}
+
+			cursor = endsAt.plus(30, ChronoUnit.MINUTES);
 		}
 	}
 }

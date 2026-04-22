@@ -53,6 +53,7 @@ ___
 |--------------|----------------------------------|--------------------------------|---------|
 | GET          | /api/showtimes                   | 📃 Get all showtimes           | Public  |
 | GET          | /api/showtimes/{id}              | 🔍 Get showtime by ID          | Public  |
+| GET          | /api/showtimes/{id}/seats        | 🪑 Get showtime seat map        | Public  |
 | GET          | /api/movies/{id}/showtimes       | 🎬 Get showtimes by movie      | Public  |
 | POST         | /api/showtimes                   | ➕ Create showtime             | Private |
 | PUT          | /api/showtimes/{id}              | ✏️ Update showtime             | Private |
@@ -69,6 +70,12 @@ ___
 | GET          | /api/bookings/pending             | ⏳ Get pending booking for showtime    | Private |
 | POST         | /api/bookings/{bookingId}/cancel  | ↩️ Cancel hold (release seats)         | Private |
 
+## 👤 Account
+| Request Type | URL              | Functionality      | Access  |
+|--------------|------------------|--------------------|---------|
+| GET          | /api/users/me    | 👤 Me profile      | Private |
+| PATCH        | /api/users/me    | ✏️ Update profile  | Private |
+
 ## 🛠️ Admin
 | Request Type | URL                      | Functionality     | Access  |
 |--------------|--------------------------|-------------------|---------|
@@ -77,8 +84,6 @@ ___
 | PATCH        | /api/admin/users/{id}    | ✏️ Update user    | Private |
 | GET          | /api/admin/bookings      | 📃 List bookings  | Private |
 | GET          | /api/admin/bookings/{id} | 🔍 Get booking    | Private |
-| GET          | /api/users/me            | 👤 Me profile     | Private |
-| PATCH        | /api/users/me            | ✏️ Update profile | Private |
 
  
 # 💠 ERD (temp)

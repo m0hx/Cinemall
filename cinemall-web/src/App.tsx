@@ -7,6 +7,7 @@ import { MoviesPage } from './pages/MoviesPage.tsx'
 import { MovieDetailPage } from './pages/MovieDetailPage.tsx'
 import { ShowtimePage } from './pages/ShowtimePage.tsx'
 import { MyBookingsPage } from './pages/MyBookingsPage.tsx'
+import { ProfilePage } from './pages/ProfilePage.tsx'
 import { SignInPage } from './pages/SignInPage.tsx'
 import { SignUpPage } from './pages/SignUpPage.tsx'
 
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/movies/:movieId" element={<MovieDetailPage />} />
         <Route path="/showtimes/:showtimeId" element={<ShowtimePage />} />
         <Route path="/bookings" element={<MyBookingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
       </Route>

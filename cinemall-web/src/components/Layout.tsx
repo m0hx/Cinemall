@@ -15,7 +15,12 @@ export function Layout() {
   const links = useMemo(
     () => [
       { href: '/movies', label: 'Movies' },
-      ...(token ? [{ href: '/bookings', label: 'My bookings' }] : []),
+      ...(token
+        ? [
+            { href: '/bookings', label: 'My bookings' },
+            { href: '/profile', label: 'Profile' },
+          ]
+        : []),
       { href: '/about', label: 'About' },
       { href: '/contact', label: 'Contact' },
     ],

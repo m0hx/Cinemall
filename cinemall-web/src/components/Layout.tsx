@@ -1,16 +1,37 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.tsx'
+import { getJson } from '../api/client'
 import { Button } from '@/components/ui/button'
 
 function isActivePath(pathname: string, href: string) {
   return href === '/' ? pathname === '/' : pathname.startsWith(href)
 }
 
+type Me = { role: 'USER' | 'ADMIN' }
+
 export function Layout() {
   const { token, logout } = useAuth()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setIsAdmin(false)
+    if (!token) return
+    ;(async () => {
+      try {
+        const me = await getJson<Me>('/api/users/me', { token })
+        if (!cancelled) setIsAdmin(me.role === 'ADMIN')
+      } catch {
+        if (!cancelled) setIsAdmin(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   const links = useMemo(
     () => [
@@ -21,10 +42,11 @@ export function Layout() {
             { href: '/profile', label: 'Profile' },
           ]
         : []),
+      ...(isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
       { href: '/about', label: 'About' },
       { href: '/contact', label: 'Contact' },
     ],
-    [token],
+    [token, isAdmin],
   )
 
   const year = new Date().getFullYear()

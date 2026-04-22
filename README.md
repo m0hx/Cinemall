@@ -62,6 +62,21 @@ ___
 |--------------|-----------------------------------|----------------------------------------|---------|
 | POST         | /api/bookings/reserve             | 🪑 Reserve selected seats (5 min hold) | Private |
 | POST         | /api/bookings/{bookingId}/confirm | ✅ Simulate pay + confirm → BOOKED     | Private |
+| GET          | /api/bookings                     | 📃 List my bookings                    | Private |
+| GET          | /api/bookings/{bookingId}         | 🔍 Get my booking                      | Private |
+| GET          | /api/bookings/pending             | ⏳ Get pending booking for showtime    | Private |
+| POST         | /api/bookings/{bookingId}/cancel  | ↩️ Cancel hold (release seats)         | Private |
+
+## 🛠️ Admin
+| Request Type | URL                      | Functionality     | Access  |
+|--------------|--------------------------|-------------------|---------|
+| GET          | /api/admin/users         | 📃 List users     | Private |
+| GET          | /api/admin/users/{id}    | 🔍 Get user       | Private |
+| PATCH        | /api/admin/users/{id}    | ✏️ Update user    | Private |
+| GET          | /api/admin/bookings      | 📃 List bookings  | Private |
+| GET          | /api/admin/bookings/{id} | 🔍 Get booking    | Private |
+| GET          | /api/users/me            | 👤 Me profile     | Private |
+| PATCH        | /api/users/me            | ✏️ Update profile | Private |
 
  
 # 💠 ERD (temp)

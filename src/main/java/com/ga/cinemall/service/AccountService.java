@@ -20,14 +20,14 @@ public class AccountService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
-	public record MeResponse(Long id, String email, String displayName, Instant emailVerifiedAt) {}
+	public record MeResponse(Long id, String email, String displayName, String role, Instant emailVerifiedAt) {}
 
 	public record UpdateMeRequest(String displayName, String currentPassword, String newPassword) {}
 
 	@Transactional(readOnly = true)
 	public MeResponse getMe() {
 		User u = requireCurrentUser();
-		return new MeResponse(u.getId(), u.getEmail(), u.getDisplayName(), u.getEmailVerifiedAt());
+		return new MeResponse(u.getId(), u.getEmail(), u.getDisplayName(), u.getRole().getName(), u.getEmailVerifiedAt());
 	}
 
 	@Transactional
@@ -53,7 +53,7 @@ public class AccountService {
 		}
 
 		userRepository.save(u);
-		return new MeResponse(u.getId(), u.getEmail(), u.getDisplayName(), u.getEmailVerifiedAt());
+		return new MeResponse(u.getId(), u.getEmail(), u.getDisplayName(), u.getRole().getName(), u.getEmailVerifiedAt());
 	}
 
 	private static User requireCurrentUser() {

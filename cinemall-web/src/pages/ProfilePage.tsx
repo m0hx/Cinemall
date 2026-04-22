@@ -11,6 +11,7 @@ type Me = {
   id: number
   email: string
   displayName: string
+  role: 'USER' | 'ADMIN'
   emailVerifiedAt: string | null
 }
 

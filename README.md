@@ -57,6 +57,12 @@ ___
 | DELETE       | /api/showtimes/{id}              | ❌ Delete showtime             | Private |
   
 
+## 💳 Bookings (Seats)
+| Request Type | URL                               | Functionality                          | Access  |
+|--------------|-----------------------------------|----------------------------------------|---------|
+| POST         | /api/bookings/reserve             | 🪑 Reserve selected seats (5 min hold) | Private |
+| POST         | /api/bookings/{bookingId}/confirm | ✅ Simulate pay + confirm → BOOKED     | Private |
+
  
 # 💠 ERD (temp)
 ___

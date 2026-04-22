@@ -36,7 +36,29 @@ type ShowSeat = {
 }
 
 type ReserveResponse = {
+  bookingId: number
   reservedUntil: string
+  seats: ShowSeat[]
+}
+
+type ConfirmRequest = {
+  outcome: 'success' | 'fail'
+}
+
+type ConfirmResponse = {
+  bookingId: number
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED'
+  seats: ShowSeat[]
+}
+
+type PendingResponse = {
+  bookingId: number | null
+  reservedUntil: string | null
+}
+
+type CancelResponse = {
+  bookingId: number
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED'
   seats: ShowSeat[]
 }
 
@@ -125,6 +147,7 @@ export function ShowtimePage() {
   const [reserving, setReserving] = useState(false)
   const [reserveError, setReserveError] = useState<string | null>(null)
   const [reservedUntil, setReservedUntil] = useState<string | null>(null)
+  const [bookingId, setBookingId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -143,6 +166,7 @@ export function ShowtimePage() {
     setSelectedIds(new Set())
     setReserveError(null)
     setReservedUntil(null)
+    setBookingId(null)
 
     ;(async () => {
       try {
@@ -152,6 +176,15 @@ export function ShowtimePage() {
         const seats = await getJson<ShowSeat[]>(`/api/showtimes/${showtimeId}/seats`)
         if (cancelled) return
         setShowSeats(Array.isArray(seats) ? seats : [])
+
+        if (token) {
+          const pending = await getJson<PendingResponse>(`/api/bookings/pending?showtimeId=${showtimeId}`, {
+            token,
+          })
+          if (cancelled) return
+          setBookingId(typeof pending.bookingId === 'number' ? pending.bookingId : null)
+          setReservedUntil(pending.reservedUntil ?? null)
+        }
       } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Failed to load showtime')
@@ -243,9 +276,58 @@ export function ShowtimePage() {
       )
       setShowSeats(Array.isArray(res.seats) ? res.seats : [])
       setReservedUntil(res.reservedUntil ?? null)
+      setBookingId(typeof res.bookingId === 'number' ? res.bookingId : null)
       setSelectedIds(new Set())
     } catch (err) {
       setReserveError(err instanceof Error ? err.message : 'Failed to reserve seats')
+    } finally {
+      setReserving(false)
+    }
+  }
+
+  async function confirmBooking(outcome: ConfirmRequest['outcome']) {
+    setReserveError(null)
+    if (!token) {
+      setReserveError('Please sign in to confirm.')
+      return
+    }
+    if (bookingId == null) return
+    setReserving(true)
+    try {
+      const res = await postJson<ConfirmResponse>(
+        `/api/bookings/${bookingId}/confirm`,
+        { outcome },
+        { token },
+      )
+      setShowSeats(Array.isArray(res.seats) ? res.seats : [])
+      if (res.status === 'CONFIRMED') {
+        setReservedUntil(null)
+        setBookingId(null)
+        setSelectedIds(new Set())
+      }
+    } catch (err) {
+      setReserveError(err instanceof Error ? err.message : 'Failed to confirm booking')
+    } finally {
+      setReserving(false)
+    }
+  }
+
+  async function cancelBookingHold() {
+    setReserveError(null)
+    if (!token) {
+      setReserveError('Please sign in to cancel.')
+      return
+    }
+    if (bookingId == null) return
+    setReserving(true)
+    try {
+      const res = await postJson<CancelResponse>(`/api/bookings/${bookingId}/cancel`, {}, { token })
+      setShowSeats(Array.isArray(res.seats) ? res.seats : [])
+      setReservedUntil(null)
+      setBookingId(null)
+      setSelectedIds(new Set())
+    } catch (err) {
+      setReserveError(err instanceof Error ? err.message : 'Failed to cancel reservation')
     } finally {
       setReserving(false)
     }
@@ -358,6 +440,24 @@ export function ShowtimePage() {
                     onClick={() => void reserveSelected()}
                   >
                     {reserving ? 'Reserving…' : 'Reserve selected'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={reserving || bookingId == null}
+                    onClick={() => void confirmBooking('success')}
+                  >
+                    {reserving ? 'Working…' : 'Pay & confirm'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={reserving || bookingId == null}
+                    onClick={() => void cancelBookingHold()}
+                  >
+                    Cancel hold
                   </Button>
                 </div>
               </div>

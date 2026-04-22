@@ -1,9 +1,15 @@
 package com.ga.cinemall.service;
 
+import com.ga.cinemall.model.Booking;
+import com.ga.cinemall.model.BookingSeat;
+import com.ga.cinemall.model.BookingStatus;
 import com.ga.cinemall.model.ShowSeat;
 import com.ga.cinemall.model.ShowSeatStatus;
 import com.ga.cinemall.model.User;
+import com.ga.cinemall.repository.BookingRepository;
+import com.ga.cinemall.repository.BookingSeatRepository;
 import com.ga.cinemall.repository.ShowSeatRepository;
+import com.ga.cinemall.repository.ShowtimeRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -20,8 +26,11 @@ public class BookingSeatHoldService {
 
 	private static final int MAX_SEATS_PER_RESERVE = 8;
 
+	private final ShowtimeRepository showtimeRepository;
 	private final ShowSeatRepository showSeatRepository;
 	private final ShowSeatService showSeatService;
+	private final BookingRepository bookingRepository;
+	private final BookingSeatRepository bookingSeatRepository;
 
 	@Transactional
 	public BookingService.ReserveResponse applyHold(BookingService.ReserveRequest req, User currentUser) {
@@ -72,6 +81,24 @@ public class BookingSeatHoldService {
 			showSeatRepository.save(s);
 		}
 
+		// Persist a booking record for checkout/confirm.
+		Booking booking = new Booking();
+		booking.setUser(currentUser);
+		booking.setShowtime(showtimeRepository
+				.findById(req.showtimeId())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Showtime not found with id: " + req.showtimeId())));
+		booking.setStatus(BookingStatus.PENDING);
+		booking.setCreatedAt(now);
+		booking.setConfirmedAt(null);
+		booking = bookingRepository.save(booking);
+
+		for (ShowSeat s : seats) {
+			BookingSeat bs = new BookingSeat();
+			bs.setBooking(booking);
+			bs.setShowSeat(s);
+			bookingSeatRepository.save(bs);
+		}
+
 		List<ShowSeat> all = showSeatRepository.findByShowtime_IdOrderByHallSeat_RowLabelAscHallSeat_SeatNumberAsc(req.showtimeId());
 		List<ShowSeatService.ShowSeatDto> dtos = new ArrayList<>(all.size());
 		for (ShowSeat s : all) {
@@ -87,6 +114,6 @@ public class BookingSeatHoldService {
 					s.getStatus()));
 		}
 
-		return new BookingService.ReserveResponse(reservedUntil, dtos);
+		return new BookingService.ReserveResponse(booking.getId(), reservedUntil, dtos);
 	}
 }

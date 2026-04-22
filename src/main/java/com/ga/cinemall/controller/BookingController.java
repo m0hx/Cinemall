@@ -43,5 +43,17 @@ public class BookingController {
 	public BookingService.CancelResponse cancel(@PathVariable Long bookingId) {
 		return bookingService.cancelBooking(bookingId);
 	}
+
+	@GetMapping
+	@PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+	public java.util.List<BookingService.BookingSummaryResponse> listMine() {
+		return bookingService.listMyBookings();
+	}
+
+	@GetMapping("/{bookingId}")
+	@PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+	public BookingService.BookingDetailResponse getMine(@PathVariable Long bookingId) {
+		return bookingService.getMyBooking(bookingId);
+	}
 }
 
